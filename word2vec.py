@@ -40,7 +40,6 @@ class Wordtovec:
     def rank(self, docs, doc_ids, queries):
 
         self.train_model(docs, queries)
-
         self.model = Word2Vec.load('model.bin')
         self.model_words = list(self.model.wv.index_to_key) #loads all the vocab words
         self.model_wv_dict = {word : self.model.wv[word] for word in self.model_words}  #creates a dict for all words in vocab and maps it with its vec
