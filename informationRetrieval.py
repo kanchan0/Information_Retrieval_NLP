@@ -1,6 +1,7 @@
 # Add your import statements here
 from util import *
 import numpy as np
+from nltk.stem import PorterStemmer
 from numpy.linalg import norm
 from collections import defaultdict
 
@@ -44,29 +45,34 @@ class InformationRetrieval():
 		index = None
 		#Fill in code here
 		#print(docs)
-		term_freq_table = defaultdict(defaultdict)
+		
 		i = 0
-		self.docIDs = docIDs
 		index_ = {}
 		words_in_doc = {}
+		self.docIDs = docIDs
+		self.stemmer = PorterStemmer()
+		term_freq_table = defaultdict(defaultdict)
 
 		for doc in docs:
 			words_in_doc[docIDs[i]] = 0
 			for sent in doc:
 				for words in sent:
-					if words not in index_.keys():
-						index_[words] = [docIDs[i]]
-					else:
-						if(docIDs[i] not in index_[words]):
-							index_[words].append(docIDs[i])
 
-					if(words not in term_freq_table[docIDs[i]].keys()):
-						term_freq_table[docIDs[i]][words] = 1
+					stemmed_word = self.stemmer.stem(words)
+					if stemmed_word not in index_.keys():
+						index_[stemmed_word] = [docIDs[i]]
 					else:
-						term_freq_table[docIDs[i]][words] += 1
+						if(docIDs[i] not in index_[stemmed_word]):
+							index_[stemmed_word].append(docIDs[i])
+
+					if(stemmed_word not in term_freq_table[docIDs[i]].keys()):
+						term_freq_table[docIDs[i]][stemmed_word] = 1
+					else:
+						term_freq_table[docIDs[i]][stemmed_word] += 1
 					
 					words_in_doc[docIDs[i]] += 1
 			i += 1
+
 
 		
 		'''
@@ -81,8 +87,8 @@ class InformationRetrieval():
 		because they contain more words, which can bias the importance of terms within those 
 		documents.
 		'''
-		self.tf_idf = {}
 		i = 0
+		self.tf_idf = {}
 		for doc in term_freq_table.keys():
 			self.tf_idf[doc] = [0.0] * len(index_.keys())
 			for word in term_freq_table[doc].keys():
@@ -122,21 +128,15 @@ class InformationRetrieval():
 			count = 0 
 			for sent in query:
 				for term in sent:
+					stemmed_word = self.stemmer.stem(term)
 					count += 1
-					if term not in all_words:
+					if stemmed_word not in all_words:
 						continue
-					if(term not in query_term_freq):
-						query_term_freq[term] = 1
+					if(stemmed_word not in query_term_freq):
+						query_term_freq[stemmed_word] = 1
 					else:
-						query_term_freq[term] += 1
+						query_term_freq[stemmed_word] += 1
 			
-			'''
-			below I construct the query vector by calculating the TF-IDF weight for each term in
-			the query. The TF-IDF weight is computed as (term frequency / total terms in query) *
-			log(total documents / documents containing term). This creates a vector representing the
-			query in the same vector space as the documents.
-			'''
-
 			query_vec = [0] * len(self.index.keys())
 			for word in query_term_freq.keys():
 				ind = list(self.index.keys()).index(word)
@@ -159,10 +159,4 @@ class InformationRetrieval():
 			all_comparisions.append(list(similarities.keys()))
 
 		doc_IDs_ordered = all_comparisions
-		#print(doc_IDs_ordered)
 		return doc_IDs_ordered
-
-
-
-
-

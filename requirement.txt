@@ -1,7 +1,7 @@
 gensim
 numpy
 seaborn
-scipy
+scipy==1.10.1
 matplotlib
 scikit-learn
 pandas
