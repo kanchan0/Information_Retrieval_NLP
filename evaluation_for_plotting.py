@@ -1,7 +1,7 @@
 import math
 import pandas as pd
 import numpy as np
-class Evaluation():
+class EvaluationPlot():
 
 	def queryPrecision(self, query_doc_IDs_ordered, query_id, true_doc_IDs, k):
 		"""
@@ -77,7 +77,7 @@ class Evaluation():
         
 		meanPrecision = sum(precision)/len(precision)
 		
-		return meanPrecision
+		return meanPrecision, precision
 
 
 	def queryRecall(self, query_doc_IDs_ordered, query_id, true_doc_IDs, k):
@@ -159,7 +159,7 @@ class Evaluation():
         # Compute the mean recall
 		meanRecall = sum(recall)/len(recall)
 
-		return meanRecall
+		return meanRecall, recall
 
 
 	def queryFscore(self, query_doc_IDs_ordered, query_id, true_doc_IDs, k):
@@ -244,7 +244,7 @@ class Evaluation():
         
 		meanFscore = sum(Fscore)/len(Fscore)
 
-		return meanFscore
+		return meanFscore, Fscore
 	
 
 	def queryNDCG(self, query_doc_IDs_ordered, query_id, true_doc_IDs, k):
@@ -338,7 +338,7 @@ class Evaluation():
 		meanNDCG = sum(nDCGs)/len(query_ids)
 
 
-		return meanNDCG
+		return meanNDCG, nDCGs
 
 
 
@@ -426,5 +426,5 @@ class Evaluation():
 		meanAveragePrecision = sum(averagePrecision)/len(averagePrecision)
 
 
-		return meanAveragePrecision
+		return meanAveragePrecision, averagePrecision
 
