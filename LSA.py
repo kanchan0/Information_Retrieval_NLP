@@ -4,13 +4,15 @@ from itertools import chain
 from numpy.linalg import norm
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import svds
-np.seterr(divide='ignore', invalid='ignore')
+from nltk.stem import PorterStemmer
+#np.seterr(divide='ignore', invalid='ignore')
 
 class LSA:
 
     # constructor
     def __init__(self) -> None:
         self.index = None
+        self.stemmer = PorterStemmer()
         self.vocab = {}
     
 
@@ -21,7 +23,7 @@ class LSA:
     diagonal matrix S are stored in US, VS, and S respectively.
     '''
     def SVD_decomposition(self):
-        U, sig, Vt = svds(self.tf_matrix, k=500, which='LM')
+        U, sig, Vt = svds(self.tf_matrix, k=700, which='LM')
         V = Vt.T
         t = 1e-10
         req_sing_vals = np.diag(np.array([i if i > t else 0.0 for i in sig]))
@@ -40,15 +42,16 @@ class LSA:
             query_vec = [0] * len(self.vocab)
             words_of_q = re.compile(r'\W+').split(query)
             for words in words_of_q:
-                if words in self.vocab:
-                    query_vec[self.vocab[words]] += 1
+                stemmed_word = self.stemmer.stem(words)
+                if stemmed_word in self.vocab:
+                    query_vec[self.vocab[stemmed_word]] += 1
             
             reduced_query = np.dot(self.US.T, query_vec)
             norm_query = norm(reduced_query)
 
             similarities = []
             for i, row in enumerate(self.VS):
-                similarity = np.dot(row, reduced_query) / (norm(row) * norm(reduced_query))
+                similarity = np.dot(row, reduced_query) / (norm(row) * norm_query)
                 similarities.append((similarity, i))
             similarities.sort(key=lambda x : x[0], reverse=True)
 
@@ -65,10 +68,11 @@ class LSA:
         for i in range(len(docs)):
             self.index = {}
             for words in list(chain.from_iterable(docs[i])):
-                if words not in self.index.keys():
-                    self.index[words] = 1
+                stemmed_word = self.stemmer.stem(words)
+                if stemmed_word not in self.index.keys():
+                    self.index[stemmed_word] = 1
                 else:
-                    self.index[words] += 1
+                    self.index[stemmed_word] += 1
             
             for (t, f) in self.index.items():
                 self.matrix_row.append(self.vocab[t])
@@ -80,11 +84,11 @@ class LSA:
         self.no_of_words = 0
         for i in range(len(docs)):
             for words in list(chain.from_iterable(docs[i])):
-                if words not in self.vocab.keys():
-                    self.vocab[words] = self.no_of_words
+                stemmed_word = self.stemmer.stem(words)
+                if stemmed_word not in self.vocab.keys():
+                    self.vocab[stemmed_word] = self.no_of_words
                     self.no_of_words += 1
 
-    
         
 
     
