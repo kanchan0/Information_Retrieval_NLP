@@ -17,7 +17,7 @@ class Wordtovec:
                 all_sentences.append(sent)
 
         model = Word2Vec(all_sentences, window=3, min_count=0)
-        model.train(all_sentences, total_examples=model.corpus_count, epochs=5)
+        model.train(all_sentences, total_examples=model.corpus_count, epochs=20)
 
         model.save('model.bin')
 

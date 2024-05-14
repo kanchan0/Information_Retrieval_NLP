@@ -4,6 +4,7 @@ from itertools import chain
 from numpy.linalg import norm
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import svds
+np.seterr(divide='ignore', invalid='ignore')
 
 class LSA:
 
@@ -20,7 +21,7 @@ class LSA:
     diagonal matrix S are stored in US, VS, and S respectively.
     '''
     def SVD_decomposition(self):
-        U, sig, Vt = svds(self.tf_matrix, k=700, which='LM')
+        U, sig, Vt = svds(self.tf_matrix, k=500, which='LM')
         V = Vt.T
         t = 1e-10
         req_sing_vals = np.diag(np.array([i if i > t else 0.0 for i in sig]))
@@ -47,7 +48,7 @@ class LSA:
 
             similarities = []
             for i, row in enumerate(self.VS):
-                similarity = np.dot(row, reduced_query) / ((norm(row)) * norm_query)
+                similarity = np.dot(row, reduced_query) / (norm(row) * norm(reduced_query))
                 similarities.append((similarity, i))
             similarities.sort(key=lambda x : x[0], reverse=True)
 

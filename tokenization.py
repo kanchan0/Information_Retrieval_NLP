@@ -4,8 +4,6 @@ from util import *
 import nltk
 from nltk.tokenize import TreebankWordTokenizer
 
-
-
 class Tokenization():
 
 	def naive(self, text):
