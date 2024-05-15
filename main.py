@@ -1,4 +1,4 @@
-
+# All the imports
 from sentenceSegmentation import SentenceSegmentation
 from tokenization import Tokenization
 from inflectionReduction import InflectionReduction
@@ -6,7 +6,8 @@ from stopwordRemoval import StopwordRemoval
 from informationRetrieval import InformationRetrieval
 from evaluation import Evaluation
 from LSA import LSA
-#from word2vec import Wordtovec
+from word2vec import Wordtovec
+from okapiBM25 import BestMatch_25
 
 from sys import version_info
 import argparse
@@ -29,7 +30,8 @@ class SearchEngine:
 		self.evaluator = Evaluation()
 
 		self.lsa = LSA()
-		#self.word2vec = Wordtovec()
+		self.word2vec = Wordtovec()
+		self.okapi = BestMatch_25()
 
 	def segmentSentences(self, text):
 		"""
@@ -156,10 +158,11 @@ class SearchEngine:
 		if self.args.algorithm == "LSA":
 			doc_IDs_ordered = self.lsa.rank(processedDocs, doc_ids, queries)
 		
-		#elif self.args.algorithm == "WORD2VEC":
-			#doc_IDs_ordered = self.word2vec.rank(docs, doc_ids, queries)	
+		elif self.args.algorithm == "WORD2VEC":
+			doc_IDs_ordered = self.word2vec.rank(docs, doc_ids,processedQueries)	
+		elif self.args.algorithm == "OKAPI":
+			doc_IDs_ordered = self.okapi.rank(processedDocs, doc_ids, queries)
 		else:
-			print('Insidde else')
 		# Build document index
 			self.informationRetriever.buildIndex(processedDocs, doc_ids)
 		# Rank the documents for each query
@@ -203,7 +206,7 @@ class SearchEngine:
 		plt.legend()
 		plt.title("Evaluation Metrics - Cranfield Dataset")
 		plt.xlabel("k")
-		plt.savefig(args.out_folder + "eval_plot_lsa.png")
+		plt.savefig(args.out_folder + "eval_plot_.png")
 
 		
 	def handleCustomQuery(self):
@@ -252,7 +255,7 @@ if __name__ == "__main__":
 	                    help = "Tokenizer Type [naive|ptb]")
 	parser.add_argument('-custom', action = "store_true", 
 						help = "Take custom query as input")
-	parser.add_argument('-algorithm', default='IF',
+	parser.add_argument('-algorithm',
 						help = "Takes diferent algorithm")
 	
 	# Parse the input arguments
