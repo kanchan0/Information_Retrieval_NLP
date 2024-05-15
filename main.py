@@ -164,10 +164,10 @@ class SearchEngine:
 
 		# Execute the codes for the LSA and others
 		if self.args.algorithm == "LSA":
-			doc_IDs_ordered = self.lsa.rank(processedDocs, doc_ids, queries)
+			doc_IDs_ordered = self.lsa.rank(processedDocs, doc_ids, processedQueries)
 		
 		elif self.args.algorithm == "WORD2VEC":
-			doc_IDs_ordered = self.word2vec.rank(docs, doc_ids, queries)	
+			doc_IDs_ordered = self.word2vec.rank(docs, doc_ids, processedQueries)	
 		else:
 		# Build document index
 			self.informationRetriever.buildIndex(processedDocs, doc_ids)
