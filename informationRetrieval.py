@@ -1,8 +1,8 @@
 # Add your import statements here
 from util import *
 import numpy as np
-from numpy.linalg import norm
 from nltk.stem import PorterStemmer
+from numpy.linalg import norm
 from collections import defaultdict
 
 def cosine_similarity(vector1, vector2):
@@ -12,12 +12,14 @@ def cosine_similarity(vector1, vector2):
 		Output : cosine similarity between the input vectors.
 	'''
 
-	ep = 1e-4	# this small number is added to vectors to avoid division with zero	
+	epsilon = 0.0001	# this small number is added to vectors to avoid division with zero	
 	vector1 = np.array(vector1) 
+	vector1 = vector1 + np.full(vector1.shape, epsilon) #added epsilon to each element of vector to avoid exception error due to division with zero
 	vector2 = np.array(vector2)
-	vector1 += np.full(vector1.shape, ep) #added epsilon to each element of vector to avoid exception error due to division with zero
-	vector2 += np.full(vector2.shape, ep)
+	vector2 = vector2 + np.full(vector2.shape, epsilon)
 	return np.dot(vector1, vector2) / (norm(vector1) * norm(vector2)) 
+
+
 
 class InformationRetrieval():
 
@@ -40,36 +42,36 @@ class InformationRetrieval():
 		-------
 		None
 		"""
-		self.index = None
+		index = None
 		#Fill in code here
 		#print(docs)
-		#print(docIDs)
-		iterator = 0
+		
+		i = 0
 		index_ = {}
 		words_in_doc = {}
 		self.docIDs = docIDs
 		self.stemmer = PorterStemmer()
-		tf_table = defaultdict(defaultdict)
+		term_freq_table = defaultdict(defaultdict)
 
 		for doc in docs:
-			words_in_doc[docIDs[iterator]] = 0
-			for sentence in doc:
-				for words in sentence:
-					word_stemmed = self.stemmer.stem(words)
-					if not word_stemmed in index_.keys():
-						index_[word_stemmed] = [docIDs[iterator]]
+			words_in_doc[docIDs[i]] = 0
+			for sent in doc:
+				for words in sent:
+
+					stemmed_word = self.stemmer.stem(words)
+					if stemmed_word not in index_.keys():
+						index_[stemmed_word] = [docIDs[i]]
 					else:
-						if not docIDs[iterator] in index_[word_stemmed]:
-							index_[word_stemmed].append(docIDs[iterator])
-					
-					temp = docIDs[iterator]
-					if not word_stemmed in tf_table[temp].keys():
-						tf_table[temp][word_stemmed] = 1
+						if(docIDs[i] not in index_[stemmed_word]):
+							index_[stemmed_word].append(docIDs[i])
+
+					if(stemmed_word not in term_freq_table[docIDs[i]].keys()):
+						term_freq_table[docIDs[i]][stemmed_word] = 1
 					else:
-						tf_table[temp][word_stemmed] = tf_table[temp][word_stemmed] + 1
+						term_freq_table[docIDs[i]][stemmed_word] += 1
 					
-					words_in_doc[temp] = words_in_doc[temp] + 1
-			iterator+= 1
+					words_in_doc[docIDs[i]] += 1
+			i += 1
 
 
 		
@@ -85,25 +87,28 @@ class InformationRetrieval():
 		because they contain more words, which can bias the importance of terms within those 
 		documents.
 		'''
-		iterator = 0
+		i = 0
 		self.tf_idf = {}
-		for doc in tf_table.keys():
+		for doc in term_freq_table.keys():
 			self.tf_idf[doc] = [0.0] * len(index_.keys())
-			for word in tf_table[doc].keys():
+			for word in term_freq_table[doc].keys():
 				ind = list(index_.keys()).index(word)
-				self.tf_idf[doc][ind] = (tf_table[doc][word] / (words_in_doc[docIDs[iterator]] + 1)) * np.log(len(docIDs)/ len(index_[word]))
-			iterator+= 1
+				self.tf_idf[doc][ind] = (term_freq_table[doc][word] / (words_in_doc[docIDs[i]] + 1)) * np.log(len(docIDs)/ len(index_[word]))
+			i += 1
 
 		self.index = index_
 
 	def rank(self, queries):
 		"""
 		Rank the documents according to relevance for each query
+
 		Parameters
 		----------
 		arg1 : list
 			A list of lists of lists where each sub-list is a query and
 			each sub-sub-list is a sentence of the query
+		
+
 		Returns
 		-------
 		list
@@ -112,32 +117,32 @@ class InformationRetrieval():
 		"""
 
 		doc_IDs_ordered = []
+
 		#Fill in code here
 
-		query_term_freq = {}
-		AllComparisons = []
 		all_words = list(self.index.keys())
+		query_term_freq = {}
+		all_comparisions = []
 
 		for query in queries:
-			ctr = 0 
-			for sentence in query:
-				for term in sentence:
-					word_stemmed = self.stemmer.stem(term)
-					ctr += 1
-					if not word_stemmed in all_words:
+			count = 0 
+			for sent in query:
+				for term in sent:
+					stemmed_word = self.stemmer.stem(term)
+					count += 1
+					if stemmed_word not in all_words:
 						continue
-					if not word_stemmed in query_term_freq:
-						query_term_freq[word_stemmed] = 1
+					if(stemmed_word not in query_term_freq):
+						query_term_freq[stemmed_word] = 1
 					else:
-						query_term_freq[word_stemmed] += 1
+						query_term_freq[stemmed_word] += 1
 			
 			query_vec = [0] * len(self.index.keys())
 			for word in query_term_freq.keys():
-
-				indii = list(self.index.keys()).index(word)
-				query_vec[indii] = (query_term_freq[word] / ctr) * np.log(len(self.docIDs) / len(self.index[word]))
+				ind = list(self.index.keys()).index(word)
+				query_vec[ind] = (query_term_freq[word] / count) * np.log(len(self.docIDs) / len(self.index[word]))
 			
-			ctr = 0
+			count = 0
 			query_term_freq = {}
 
 			'''
@@ -146,15 +151,12 @@ class InformationRetrieval():
 			and appending the ordered list of document IDs to all_comparisons.
 			'''
 
-			sim_scores = {}
-			keys =  self.tf_idf.keys()
-			for doc in keys:
-				x = self.tf_idf[doc]
-				sim_scores[doc] = cosine_similarity(x, query_vec)
-		
-			sim_scores = dict(sorted(sim_scores.items(), key=lambda item: item[1], reverse=True))
-			#print(">>>>>>>>>>",(sim_scores==sim_))
-			AllComparisons.append(list(sim_scores.keys()))
+			similarities = {}
+			for doc in self.tf_idf.keys():
+				similarities[doc] = cosine_similarity(self.tf_idf[doc], query_vec)
+			
+			similarities = {k : v for k, v in sorted(similarities.items(), key= lambda item : item[1], reverse=True)}
+			all_comparisions.append(list(similarities.keys()))
 
-		doc_IDs_ordered = AllComparisons
+		doc_IDs_ordered = all_comparisions
 		return doc_IDs_ordered

@@ -1,4 +1,4 @@
-from symbol import eval_input
+
 from sentenceSegmentation import SentenceSegmentation
 from tokenization import Tokenization
 from inflectionReduction import InflectionReduction
@@ -6,23 +6,13 @@ from stopwordRemoval import StopwordRemoval
 from informationRetrieval import InformationRetrieval
 from evaluation import Evaluation
 from LSA import LSA
-from word2vec import Wordtovec
+#from word2vec import Wordtovec
 
 from sys import version_info
 import argparse
 import json
 import matplotlib.pyplot as plt
 
-# Input compatibility for Python 2 and Python 3
-if version_info.major == 3:
-    pass
-elif version_info.major == 2:
-    try:
-        input = eval_input
-    except NameError:
-        pass
-else:
-    print ("Unknown python version - input function not safe")
 
 
 class SearchEngine:
@@ -39,7 +29,7 @@ class SearchEngine:
 		self.evaluator = Evaluation()
 
 		self.lsa = LSA()
-		self.word2vec = Wordtovec()
+		#self.word2vec = Wordtovec()
 
 	def segmentSentences(self, text):
 		"""
@@ -164,11 +154,12 @@ class SearchEngine:
 
 		# Execute the codes for the LSA and others
 		if self.args.algorithm == "LSA":
-			doc_IDs_ordered = self.lsa.rank(processedDocs, doc_ids, processedQueries)
+			doc_IDs_ordered = self.lsa.rank(processedDocs, doc_ids, queries)
 		
-		elif self.args.algorithm == "WORD2VEC":
-			doc_IDs_ordered = self.word2vec.rank(docs, doc_ids, processedQueries)	
+		#elif self.args.algorithm == "WORD2VEC":
+			#doc_IDs_ordered = self.word2vec.rank(docs, doc_ids, queries)	
 		else:
+			print('Insidde else')
 		# Build document index
 			self.informationRetriever.buildIndex(processedDocs, doc_ids)
 		# Rank the documents for each query
@@ -212,7 +203,7 @@ class SearchEngine:
 		plt.legend()
 		plt.title("Evaluation Metrics - Cranfield Dataset")
 		plt.xlabel("k")
-		plt.savefig(args.out_folder + "eval_plot.png")
+		plt.savefig(args.out_folder + "eval_plot_lsa.png")
 
 		
 	def handleCustomQuery(self):
@@ -261,7 +252,7 @@ if __name__ == "__main__":
 	                    help = "Tokenizer Type [naive|ptb]")
 	parser.add_argument('-custom', action = "store_true", 
 						help = "Take custom query as input")
-	parser.add_argument('-algorithm', 
+	parser.add_argument('-algorithm', default='IF',
 						help = "Takes diferent algorithm")
 	
 	# Parse the input arguments

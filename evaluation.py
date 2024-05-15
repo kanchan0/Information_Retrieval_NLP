@@ -270,31 +270,29 @@ class Evaluation():
 			The nDCG value as a number between 0 and 1
 		"""
 
-		nDCG = 0
+		DCG = 0
 
 		#Fill in code here
-		relevance = np.zeros((len(query_doc_IDs_ordered), 1))
+		rel_scores = np.zeros((len(query_doc_IDs_ordered), 1))
 		true_doc_IDs["position"] = 5 - true_doc_IDs["position"] 
 
-
-		# finding ideal DCG value
-		true_doc_IDs_sorted = true_doc_IDs.sort_values("position", ascending = False)
-		DCG_ideal = true_doc_IDs_sorted.iloc[0]["position"]
-
-		for i in range(1, min(k,len(true_doc_IDs))):
-			DCG_ideal += true_doc_IDs_sorted.iloc[i]["position"] * np.log(2)/np.log(i+1)
-
-		t_doc_IDs = list(map(int, true_doc_IDs["id"]))
+        #Calculating DCG
+		true_IDs = list(map(int, true_doc_IDs["id"]))
 		for i in range(k):
-			if query_doc_IDs_ordered[i] in t_doc_IDs:
-				relevance[i] = true_doc_IDs[true_doc_IDs["id"] == str(query_doc_IDs_ordered[i])].iloc[0]["position"]
+			if query_doc_IDs_ordered[i] in true_IDs:
+				rel_scores[i] = true_doc_IDs[true_doc_IDs["id"] == str(query_doc_IDs_ordered[i])].iloc[0]["position"]
 
 		for i in range(k):
-			nDCG += relevance[i] * np.log(2) / np.log(i + 2)  # Note that here index starts from 0
+			DCG += rel_scores[i] / np.log(i+2) 
+			
+		#Calculating idcg
+		true_IDs_sort = true_doc_IDs.sort_values("position", ascending = False)
+		idcg = 0
 
-		nDCG = nDCG/DCG_ideal
+		for i in range(0, min(k,len(true_doc_IDs))):
+			idcg += true_IDs_sort.iloc[i]["position"] / np.log(i+2)
 
-		# print(nDCG)
+		nDCG = DCG/ idcg
 
 		return nDCG[0]
 
@@ -323,19 +321,26 @@ class Evaluation():
 		float
 			The mean nDCG value as a number between 0 and 1
 		"""
+		no_of_queries = len(query_ids)
 
-		nDCGs = []
+		mnDCG = []
 
-		#Fill in code here
-		qrels_df = pd.DataFrame(qrels)
-		for i in range(len(query_ids)):
-			query_doc_IDs_ordered = doc_IDs_ordered[i]
+		#Data frame object is used only in case of nDCG to make the sorting easier
+		df_qrels = pd.DataFrame(qrels)
+		
+		for i in range(no_of_queries):
+			
+			relevant_document = doc_IDs_ordered[i]
 			query_id = query_ids[i]
-			true_doc_IDs = qrels_df[["position","id"]][qrels_df["query_num"] == str(query_id)]			
-			nDCG = self.queryNDCG(query_doc_IDs_ordered, query_id, true_doc_IDs, k)
+			
+            #Create a list of true document ids information for the particular query available in cran_qrels.json
+			true_IDs = df_qrels[["position","id"]][df_qrels["query_num"] == str(query_id)]		
+				
+			nDCG = self.queryNDCG(relevant_document, query_id, true_IDs, k)
 
-			nDCGs.append(nDCG)
-		meanNDCG = sum(nDCGs)/len(query_ids)
+			mnDCG.append(nDCG)
+			
+		meanNDCG = sum(mnDCG)/len(query_ids)
 
 
 		return meanNDCG

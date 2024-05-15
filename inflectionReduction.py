@@ -5,7 +5,6 @@ import nltk
 from nltk.stem import PorterStemmer
 
 
-
 class InflectionReduction:
 
 	def reduce(self, text):
